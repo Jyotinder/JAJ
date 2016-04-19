@@ -111,14 +111,24 @@ class interp:
                         self.EAX=var1
         elif opcode=="SUB":
             self.EAX=int(self.EAX)
+            var1=0
+            var2=0
             if "VAR" in temp[1]:
-                var1=self.scope(temp[1])
-                self.EAX=var1-temp[2]
+                var1=int(self.scope(temp[1]))
             else:
                 if "EAX" in temp[1]:
-                    self.EAX-=int(temp[2])
+                    var1=self.EAX
                 else:
-                    self.EAX=temp[1]-temp[2]
+                    var1=int(temp[1])
+
+            if "VAR" in temp[2]:
+                var2=int(self.scope(temp[2]))
+            else:
+                if "EAX" in temp[2]:
+                    var2=self.EAX
+                else:
+                    var2=int(temp[2])
+            self.EAX=var1-var2
         elif opcode=="RET":
             if "VAR" in temp[1]:
                 self.EAX=int(self.scope(temp[1]))
@@ -142,8 +152,48 @@ class interp:
                 if "EAX" in temp[2]:
                     var2=self.EAX
                 else:
-                    var2=int(temp[1])
+                    var2=int(temp[2])
             self.EAX=var1*var2
+        elif opcode=="ADD":
+            self.EAX=int(self.EAX)
+            var1=0
+            var2=0
+            if "VAR" in temp[1]:
+                var1=int(self.scope(temp[1]))
+            else:
+                if "EAX" in temp[1]:
+                    var1=self.EAX
+                else:
+                    var1=int(temp[1])
+
+            if "VAR" in temp[2]:
+                var2=int(self.scope(temp[2]))
+            else:
+                if "EAX" in temp[2]:
+                    var2=self.EAX
+                else:
+                    var2=int(temp[2])
+            self.EAX=var1+var2
+        elif opcode=="DIV":
+            self.EAX=int(self.EAX)
+            var1=0
+            var2=0
+            if "VAR" in temp[1]:
+                var1=int(self.scope(temp[1]))
+            else:
+                if "EAX" in temp[1]:
+                    var1=self.EAX
+                else:
+                    var1=int(temp[1])
+
+            if "VAR" in temp[2]:
+                var2=int(self.scope(temp[2]))
+            else:
+                if "EAX" in temp[2]:
+                    var2=self.EAX
+                else:
+                    var2=int(temp[2])
+            self.EAX=var1/var2
 
     def stackunwind(self):
         if len(self.callstack) >0:
