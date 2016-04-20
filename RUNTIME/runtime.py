@@ -1,5 +1,30 @@
 import os
 
+class Stack:
+  def __init__(self):
+    self.__storage = []
+
+  def isEmpty(self):
+    if len(self.__storage) == 0:
+        return 1
+    else:
+        return 0
+
+  def push(self,p):
+    self.__storage.append(p)
+
+  def pop(self):
+    return self.__storage.pop()
+
+  def size(self):
+    return len(self.__storage)
+
+  def top(self):
+    if not self.isEmpty():
+        return self.__storage[-1]
+
+
+
 class interp:
     def __init__(self,code):
         self.g_symtable={}
@@ -38,6 +63,17 @@ class interp:
                 self.EIP=index
                 break
 
+    def set_scope(self,temp,val):
+        if temp in self.localstack.keys():
+            #print self.localstack[temp]
+            self.localstack[temp]=val
+        elif temp in self.g_symtable.keys():
+            #print self.g_symtable[temp]
+            self.g_symtable[temp]=val
+        elif temp in "EAX":
+            self.EAX=val
+        else:
+            print "set_scope ERROR"
 
 
     def scope(self,temp):
@@ -48,7 +84,7 @@ class interp:
             #print self.g_symtable[temp]
             return self.g_symtable[temp]
         else:
-            print "ERROR"
+            print "scope ERROR"
 
     def parse(self,ln):
         if self.debug:
@@ -100,25 +136,44 @@ class interp:
         elif opcode=="JNE":
             if self.R is not 0:
                 self.FIND_IP(temp[1])
+        elif opcode=="JLE":
+            if self.R is -1:
+                self.FIND_IP(temp[1])
+        elif opcode=="JMP":
+            self.FIND_IP(temp[1])
+        elif opcode=="JGE":
+            if self.R is 1:
+                self.FIND_IP(temp[1])
+        elif opcode=="JE":
+            if self.R is 0:
+                self.FIND_IP(temp[1])
         elif opcode=="MOV":
-            if "VAR" in temp[1]:
-                var1=self.scope(temp[1])
-                self.EAX=(var1)
+            var1 = 0
+            if "VAR" in temp[2]:
+                var1=int(self.scope(temp[2]))
+                self.set_scope(temp[1],var1)
             else:
-                if "EAX" in temp[1]:
-                    if "VAR" in temp[2]:
-                        var1=self.scope(temp[2])
-                        self.EAX=var1
+                self.set_scope(temp[1],int(self.EAX))
         elif opcode=="SUB":
             self.EAX=int(self.EAX)
+            var1=0
+            var2=0
             if "VAR" in temp[1]:
-                var1=self.scope(temp[1])
-                self.EAX=var1-temp[2]
+                var1=int(self.scope(temp[1]))
             else:
                 if "EAX" in temp[1]:
-                    self.EAX-=int(temp[2])
+                    var1=self.EAX
                 else:
-                    self.EAX=temp[1]-temp[2]
+                    var1=int(temp[1])
+
+            if "VAR" in temp[2]:
+                var2=int(self.scope(temp[2]))
+            else:
+                if "EAX" in temp[2]:
+                    var2=self.EAX
+                else:
+                    var2=int(temp[2])
+            self.EAX=var1-var2
         elif opcode=="RET":
             if "VAR" in temp[1]:
                 self.EAX=int(self.scope(temp[1]))
@@ -142,8 +197,63 @@ class interp:
                 if "EAX" in temp[2]:
                     var2=self.EAX
                 else:
-                    var2=int(temp[1])
+                    var2=int(temp[2])
             self.EAX=var1*var2
+        elif opcode=="ADD":
+            self.EAX=int(self.EAX)
+            var1=0
+            var2=0
+            if "VAR" in temp[1]:
+                var1=int(self.scope(temp[1]))
+            else:
+                if "EAX" in temp[1]:
+                    var1=self.EAX
+                else:
+                    var1=int(temp[1])
+
+            if "VAR" in temp[2]:
+                var2=int(self.scope(temp[2]))
+            else:
+                if "EAX" in temp[2]:
+                    var2=self.EAX
+                else:
+                    var2=int(temp[2])
+            self.EAX=var1+var2
+        elif opcode=="DIV":
+            self.EAX=int(self.EAX)
+            var1=0
+            var2=0
+            if "VAR" in temp[1]:
+                var1=int(self.scope(temp[1]))
+            else:
+                if "EAX" in temp[1]:
+                    var1=self.EAX
+                else:
+                    var1=int(temp[1])
+
+            if "VAR" in temp[2]:
+                var2=int(self.scope(temp[2]))
+            else:
+                if "EAX" in temp[2]:
+                    var2=self.EAX
+                else:
+                    var2=int(temp[2])
+            self.EAX=var1/var2
+
+        elif opcode=="STACK":
+            self.localstack[temp[1]]=Stack()
+        elif opcode=="STACK_PSHS":
+            var1=self.scope(temp[1])
+            var1.push(int(temp[2]))
+        elif opcode=="STACK_POP":
+            var1=self.scope(temp[1])
+            var1.pop()
+        elif opcode=="TOPS":
+            var1=self.scope(temp[1])
+            self.EAX=var1.top()
+
+
+
 
     def stackunwind(self):
         if len(self.callstack) >0:
@@ -171,6 +281,18 @@ def main():
 
     In=interp(code)
     In.execute()
+
+    # print "###########STACK###################"
+    # s=Stack()
+    # b= s.isEmpty()
+    # print b
+    # s.push(10)
+    # s.push(100)
+    # print s.top()
+    # s.pop()
+    # print s.top()
+
+
 
 if __name__ == '__main__':
     main()
