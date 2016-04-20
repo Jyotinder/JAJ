@@ -1,5 +1,30 @@
 import os
 
+class Stack:
+  def __init__(self):
+    self.__storage = []
+
+  def isEmpty(self):
+    if len(self.__storage) == 0:
+        return 1
+    else:
+        return 0
+
+  def push(self,p):
+    self.__storage.append(p)
+
+  def pop(self):
+    return self.__storage.pop()
+
+  def size(self):
+    return len(self.__storage)
+
+  def top(self):
+    if not self.isEmpty():
+        return self.__storage[-1]
+
+
+
 class interp:
     def __init__(self,code):
         self.g_symtable={}
@@ -204,6 +229,21 @@ class interp:
                     var2=int(temp[2])
             self.EAX=var1/var2
 
+        elif opcode=="STACK":
+            self.localstack[temp[1]]=Stack()
+        elif opcode=="STACK_PSHS":
+            var1=self.scope(temp[1])
+            var1.push(int(temp[2]))
+        elif opcode=="STACK_POP":
+            var1=self.scope(temp[1])
+            var1.pop()
+        elif opcode=="TOPS":
+            var1=self.scope(temp[1])
+            self.EAX=var1.top()
+
+
+
+
     def stackunwind(self):
         if len(self.callstack) >0:
             self.localstack,self.EIP=self.callstack[-1]
@@ -230,6 +270,18 @@ def main():
 
     In=interp(code)
     In.execute()
+
+    # print "###########STACK###################"
+    # s=Stack()
+    # b= s.isEmpty()
+    # print b
+    # s.push(10)
+    # s.push(100)
+    # print s.top()
+    # s.pop()
+    # print s.top()
+
+
 
 if __name__ == '__main__':
     main()
