@@ -38,6 +38,17 @@ class interp:
                 self.EIP=index
                 break
 
+    def set_scope(self,temp,val):
+        if temp in self.localstack.keys():
+            #print self.localstack[temp]
+            self.localstack[temp]=val
+        elif temp in self.g_symtable.keys():
+            #print self.g_symtable[temp]
+            self.g_symtable[temp]=val
+        elif temp in "EAX":
+            self.EAX=val
+        else:
+            print "set_scope ERROR"
 
 
     def scope(self,temp):
@@ -48,7 +59,7 @@ class interp:
             #print self.g_symtable[temp]
             return self.g_symtable[temp]
         else:
-            print "ERROR"
+            print "scope ERROR"
 
     def parse(self,ln):
         if self.debug:
@@ -101,14 +112,12 @@ class interp:
             if self.R is not 0:
                 self.FIND_IP(temp[1])
         elif opcode=="MOV":
-            if "VAR" in temp[1]:
-                var1=self.scope(temp[1])
-                self.EAX=(var1)
+            var1 = 0
+            if "VAR" in temp[2]:
+                var1=int(self.scope(temp[2]))
+                self.set_scope(temp[1],var1)
             else:
-                if "EAX" in temp[1]:
-                    if "VAR" in temp[2]:
-                        var1=self.scope(temp[2])
-                        self.EAX=var1
+                self.set_scope(temp[1],int(self.EAX))
         elif opcode=="SUB":
             self.EAX=int(self.EAX)
             var1=0
