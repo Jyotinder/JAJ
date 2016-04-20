@@ -136,6 +136,17 @@ class interp:
         elif opcode=="JNE":
             if self.R is not 0:
                 self.FIND_IP(temp[1])
+        elif opcode=="JLE":
+            if self.R is -1:
+                self.FIND_IP(temp[1])
+        elif opcode=="JMP":
+            self.FIND_IP(temp[1])
+        elif opcode=="JGE":
+            if self.R is 1:
+                self.FIND_IP(temp[1])
+        elif opcode=="JE":
+            if self.R is 0:
+                self.FIND_IP(temp[1])
         elif opcode=="MOV":
             var1 = 0
             if "VAR" in temp[2]:
