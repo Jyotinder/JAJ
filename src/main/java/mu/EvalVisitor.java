@@ -26,7 +26,11 @@ public class EvalVisitor extends MuBaseVisitor<Value> {
     public Value visitAssignment(MuParser.AssignmentContext ctx) {
         String id = ctx.ID().getText();
         Value value = null;
-        if(ctx.functionCall() != null){ 
+        if(ctx.stack_top() != null){
+        	System.out.println("TOPS VAR_"+ctx.stack_top().ID());
+        	System.out.println("MOV VAR_"+ctx.getChild(0).toString()+" EAX");
+        }
+        else if(ctx.functionCall() != null){ 
         	value = this.visit(ctx.functionCall()); 
         	System.out.println("MOV VAR_"+ctx.getChild(0).toString()+" "+value);
             
@@ -129,10 +133,33 @@ public class EvalVisitor extends MuBaseVisitor<Value> {
     public Value visitNilAtom(MuParser.NilAtomContext ctx) {
         return new Value(null);
     }
-
+    
+    @Override 
+    public Value visitStack_init(MuParser.Stack_initContext ctx) { 
+    	System.out.println("STACK VAR_"+ctx.ID().getText());
+    	return visitChildren(ctx); 
+    }
+	
+    @Override 
+    public Value visitStack_operations(MuParser.Stack_operationsContext ctx) { 
+    	if(ctx.getChild(0).getText().equals("spush")) {
+    		System.out.println("STACK_PSHS VAR_"+ctx.ID().getText() +" "+ ctx.INT().getText());
+    	}
+    	else if(ctx.getChild(0).getText().equals("spop")) {
+    		System.out.println("STACK_POP VAR_"+ctx.ID().getText());
+    	}
+    	else if(ctx.getChild(0).getText().equals("empty")) {
+    		System.out.println("EMPTY VAR_"+ctx.ID().getText());
+    	}
+    	
+    	return visitChildren(ctx); 
+    }
+	
+    
     // expr overrides
     @Override
     public Value visitParExpr(MuParser.ParExprContext ctx) {
+    	
         return this.visit(ctx.expr());
     }
 
@@ -239,19 +266,25 @@ public class EvalVisitor extends MuBaseVisitor<Value> {
 
         Value left = this.visit(ctx.expr(0));
         Value right = this.visit(ctx.expr(1));
-
+        System.out.println("CMP "+left+ " " +right);
         switch (ctx.op.getType()) {
             case MuParser.LT:
-                return new Value(left.asDouble() < right.asDouble());
+            	System.out.println("JGE LABEL_"+LabelCount);
+            	break;
+                
             case MuParser.LTEQ:
-                return new Value(left.asDouble() <= right.asDouble());
+            	System.out.println("JGT LABEL_"+LabelCount);
+            	break;
             case MuParser.GT:
-                return new Value(left.asDouble() > right.asDouble());
+            	System.out.println("JLE LABEL_"+LabelCount);
+            	break;
             case MuParser.GTEQ:
-                return new Value(left.asDouble() >= right.asDouble());
+            	System.out.println("JLT LABEL_"+LabelCount);
+            	break;
             default:
                 throw new RuntimeException("unknown operator: " + MuParser.tokenNames[ctx.op.getType()]);
         }
+        return new Value("LABEL_"+LabelCount++);
     }
 
     @Override
@@ -269,12 +302,13 @@ public class EvalVisitor extends MuBaseVisitor<Value> {
         switch (ctx.op.getType()) {
             case MuParser.EQ:
             	System.out.println("CMP "+left+ " "+ right);
+            	System.out.println("JNE LABEL_"+LabelCount);
                 return new Value("LABEL_"+LabelCount++);
                         
             case MuParser.NEQ:
-                return left.isDouble() && right.isDouble() ?
-                        new Value(Math.abs(left.asDouble() - right.asDouble()) >= SMALL_VALUE) :
-                        new Value(!left.equals(right));
+            	System.out.println("CMP "+left+ " "+ right);
+            	System.out.println("JE LABEL_"+LabelCount);
+                return new Value("LABEL_"+LabelCount++);
             default:
                 throw new RuntimeException("unknown operator: " + MuParser.tokenNames[ctx.op.getType()]);
         }
@@ -334,7 +368,6 @@ public class EvalVisitor extends MuBaseVisitor<Value> {
         	}
 
             label = this.visit(condition.expr());
-            System.out.println("JNE "+label);
 
             this.visit(condition.stat_block());
             
@@ -347,18 +380,12 @@ public class EvalVisitor extends MuBaseVisitor<Value> {
     // while override
     @Override
     public Value visitWhile_stat(MuParser.While_statContext ctx) {
-
+    	String while_label = "LABEL_"+LabelCount++;
+        System.out.println(while_label);
         Value value = this.visit(ctx.expr());
-
-        while(value.asBoolean()) {
-
-            // evaluate the code block
-            this.visit(ctx.stat_block());
-
-            // evaluate the expression
-            value = this.visit(ctx.expr());
-        }
-
+        this.visit(ctx.stat_block());
+        System.out.println("JMP "+while_label);
+        System.out.println(value);
         return Value.VOID;
     }
 }

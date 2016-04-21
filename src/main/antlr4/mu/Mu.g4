@@ -18,10 +18,22 @@ stat
  | functionCall SCOL
  | return_stat SCOL
  | print
+ | stack_init
+ | stack_operations
  ;
  
 return_stat
  : 'return' expr SCOL
+ ;
+
+stack_init
+ : 'stack' ID SCOL
+ ;
+ 
+stack_operations
+ : 'spush' '(' ID ',' INT ')' SCOL
+ | 'spop' '(' ID ')' SCOL
+ | 'empty' '(' ID ')' SCOL
  ;
 
 print
@@ -43,6 +55,7 @@ paramDefs
 assignment
  : ID ASSIGN expr SCOL
  | ID ASSIGN functionCall SCOL
+ | ID ASSIGN stack_top SCOL
  ;
 
 if_stat
@@ -77,6 +90,10 @@ expr
  | expr AND expr                        #andExpr
  | expr OR expr                         #orExpr
  | atom                                 #atomExpr
+ ;
+
+stack_top
+ : 'top' '(' ID ')' 
  ;
 
 atom
