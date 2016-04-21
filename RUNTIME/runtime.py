@@ -94,8 +94,9 @@ class interp:
         if "START" in temp[0]:
             self.localstack={}
             if len(self.funarg)>0:
-                self.localstack[temp[1]]=self.funarg[0]
-                del self.funarg[0]
+                for i,val in enumerate(self.funarg):
+                    self.localstack[temp[i+1]]=self.funarg[i]
+                self.funarg=[]
         elif opcode[:3]=="VAR":
             self.localstack[temp[0]]=temp[1]
         elif opcode=="PRINT":
