@@ -56,3 +56,44 @@ PUSH VAR_x
 CALL FACTORIAL_START
 PRINT EAX
 MAIN_END
+
+############STACK######################
+STACK VAR_s
+STACK_PSHS VAR_s 10
+STACK_PSHS VAR_s 20
+EMPTY VAR_s
+VAR_b 0
+TOPS VAR_s
+MOV VAR_b EAX
+PRINT VAR_b
+STACK_POP VAR_s
+TOPS VAR_s
+MOV VAR_b EAX
+PRINT VAR_b
+
+s=stack()
+s.push(10)
+s.push(20)
+s.empty() will tell you that stack is empty or not value to check will be in EAX
+b=0
+b=s.top will give you the value on the top of the stack in this example that would be 20 this value will be in EAX then move to b
+s.pop() will remove the element form the stack here 20 will get removed
+
+#########################WHILE###############################
+VAR_z 10
+LABEL_1
+CMP VAR_z 0
+JLE LABEL_2
+PRINT VAR_z
+SUB VAR_z 1
+MOV VAR_z EAX
+JMP LABEL_1
+LABEL_2
+PRINT VAR_b
+
+z=10
+while(z<0){ this statement will genrate a lable (label_1) for the starting of the loop and a CMP which will compare the expression and JLE JGE JE is used for comparision
+            is the result is false the we will go the end of the loop which is label_2
+print z
+z=z-1
+}
