@@ -251,6 +251,9 @@ class interp:
         elif opcode=="TOPS":
             var1=self.scope(temp[1])
             self.EAX=var1.top()
+        elif opcode=="EMPTY":
+            var1=self.scope(temp[1])
+            self.EAX=var1.isEmpty()
 
 
 
