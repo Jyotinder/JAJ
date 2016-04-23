@@ -100,14 +100,29 @@ class interp:
         elif opcode[:3]=="VAR":
             self.localstack[temp[0]]=temp[1]
         elif opcode=="PRINT":
-            if temp[1] in self.localstack.keys():
-                print self.localstack[temp[1]]
-            elif temp[1] in self.g_symtable.keys():
-                print self.g_symtable[temp[1]]
+            if "VAR" in temp[1]:
+                if "VARB" in temp[1]:
+                    x=""
+                    if temp[1] in self.localstack.keys():
+                        x= self.localstack[temp[1]]
+                    elif temp[1] in self.g_symtable.keys():
+                        x= self.g_symtable[temp[1]]
+                    if "1" in x:
+                        print "true"
+                    else:
+                        print "false"
+                else:
+                    if temp[1] in self.localstack.keys():
+                        print self.localstack[temp[1]]
+                    elif temp[1] in self.g_symtable.keys():
+                        print self.g_symtable[temp[1]]
             elif "EAX" in temp[1]:
                 print(self.EAX)
             else:
-                print "ERROR"
+                str=""
+                for x in temp[1:]:
+                    str=str+" "+x
+                print str[1:]
         elif opcode =="PUSH":
             if "EAX" in temp[1]:
                 self.funarg.append(self.EAX)
