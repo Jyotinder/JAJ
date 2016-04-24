@@ -33,6 +33,7 @@ class interp:
         self.code=code
         self.datatype=['INT','FLOAT','BOOL']
         self.localstack={}
+        self.stacklocal=[]
         self.callstack=[]
         self.funarg=[]
         self.debug=0
@@ -40,6 +41,23 @@ class interp:
         self.R=0
         if self.debug:
             print code
+
+    def get_variable(self):
+        pass
+
+    def block_start(self):
+        self.stacklocal.append(self.localstack)
+        self.localstack ={}
+
+    def block_end(self):
+        #self.stacklocal.append(self.localstack)
+
+
+        if self.stacklocal[-1] is not None:
+            self.localstack =self.stacklocal[-1]
+            self.stacklocal=self.stacklocal[:-1]
+        else:
+            self.localstack={}
 
     def global_var(self):
         for index,name in enumerate(self.code):
@@ -67,19 +85,35 @@ class interp:
         if temp in self.localstack.keys():
             #print self.localstack[temp]
             self.localstack[temp]=val
-        elif temp in self.g_symtable.keys():
-            #print self.g_symtable[temp]
-            self.g_symtable[temp]=val
         elif temp in "EAX":
             self.EAX=val
-        else:
-            print "set_scope ERROR"
+        elif self.set_intermidiate(temp,val) is None:
+            if temp in self.g_symtable.keys():
+                #print self.g_symtable[temp]
+                self.g_symtable[temp]=val
 
+
+    def set_intermidiate(self,key,val):
+        for i in reversed(self.stacklocal):
+            if key in i:
+                i[key]=val
+                return 1
+        return None
+
+    def intermidiate(self,key):
+        for i in reversed(self.stacklocal):
+            if key in i:
+                return i[key]
+        return None
 
     def scope(self,temp):
         if temp in self.localstack.keys():
             #print self.localstack[temp]
             return self.localstack[temp]
+        val = self.intermidiate(temp)
+        if val is not None:
+            #print self.localstack[temp]
+            return val
         elif temp in self.g_symtable.keys():
             #print self.g_symtable[temp]
             return self.g_symtable[temp]
@@ -101,21 +135,14 @@ class interp:
             self.localstack[temp[0]]=temp[1]
         elif opcode=="PRINT":
             if "VAR" in temp[1]:
+                val=self.scope(temp[1])
                 if "VARB" in temp[1]:
-                    x=""
-                    if temp[1] in self.localstack.keys():
-                        x= self.localstack[temp[1]]
-                    elif temp[1] in self.g_symtable.keys():
-                        x= self.g_symtable[temp[1]]
-                    if "1" in x:
+                    if val ==1:
                         print "true"
                     else:
                         print "false"
                 else:
-                    if temp[1] in self.localstack.keys():
-                        print self.localstack[temp[1]]
-                    elif temp[1] in self.g_symtable.keys():
-                        print self.g_symtable[temp[1]]
+                    print val
             elif "EAX" in temp[1]:
                 print(self.EAX)
             else:
@@ -271,8 +298,10 @@ class interp:
             var1=self.scope(temp[1])
             self.EAX=var1.isEmpty()
 
-
-
+        elif opcode=="BLOCK":
+            self.block_start()
+        elif opcode=="BLOCK_END":
+            self.block_end()
 
     def stackunwind(self):
         if len(self.callstack) >0:
