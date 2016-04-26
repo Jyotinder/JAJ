@@ -1,4 +1,6 @@
 import os
+import argparse
+import sys
 
 class Stack:
   def __init__(self):
@@ -39,6 +41,7 @@ class interp:
         self.debug=0
         self.EAX=int(0)
         self.R=0
+        self.skiprange=[sys.maxint,sys.maxint]
         if self.debug:
             print code
 
@@ -132,7 +135,7 @@ class interp:
                     self.localstack[temp[i+1]]=self.funarg[i]
                 self.funarg=[]
         elif opcode[:3]=="VAR":
-            self.localstack[temp[0]]=temp[1]
+            self.localstack[temp[0]]=int (temp[1])
         elif opcode=="PRINT":
             if "VAR" in temp[1]:
                 val=self.scope(temp[1])
@@ -162,11 +165,17 @@ class interp:
         elif opcode=="CMP":
             var1=0
             var2=0
-            if "VAR" in temp[1]:
+
+            if "VARB" in temp[1]:
+                var1=int(self.scope(temp[1]))
+            elif "VAR" in temp[1]:
                 var1=int(self.scope(temp[1]))
             else:
                 var1=int(temp[1])
-            if "VAR" in temp[2]:
+
+            if "VARB" in temp[2]:
+                var2=int(self.scope(temp[2]))
+            elif "VAR" in temp[2]:
                 var2=int(self.scope(temp[2]))
             else:
                 var2=int(temp[2])
@@ -324,21 +333,15 @@ class interp:
 
 def main():
     code=[]
-    fin= open("INPUT.assm","r")
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-f', "--folderpath", help="ASSM file required", required=True)
+    args = vars(parser.parse_args())
+    file=args['folderpath']
+    fin= open(file,"r")
     code = fin.read().splitlines()
 
     In=interp(code)
     In.execute()
-
-    # print "###########STACK###################"
-    # s=Stack()
-    # b= s.isEmpty()
-    # print b
-    # s.push(10)
-    # s.push(100)
-    # print s.top()
-    # s.pop()
-    # print s.top()
 
 
 
