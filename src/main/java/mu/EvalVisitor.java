@@ -22,14 +22,11 @@ public class EvalVisitor extends MuBaseVisitor<Value> {
     
 	public EvalVisitor(PrintWriter writer) throws FileNotFoundException {
 		this.writer = writer;
-		availableRegisters.add("EAX");
-		availableRegisters.add("EBX");
 	}
 	// used to compare floating point numbers
 	public int LabelCount = 0;
     public static final double SMALL_VALUE = 0.00000000001;
     public List<String> booleanVars = new ArrayList<String>();
-    public List<String> availableRegisters = new ArrayList<String>();
     
     
 
@@ -38,16 +35,20 @@ public class EvalVisitor extends MuBaseVisitor<Value> {
     @Override 
     public Value visitGlobal_scope(MuParser.Global_scopeContext ctx) {
     	System.out.println("GLOBAL_START");
+    	writer.println("GLOBAL_START");
     	this.visit(ctx.block());
     	System.out.println("GLOBAL_END");
+    	writer.println("GLOBAL_END");
     	return null;
     }
     
     @Override 
     public Value visitBlock_scope(MuParser.Block_scopeContext ctx) { 
-    	System.out.println("BLOCK_START");
+    	System.out.println("BLOCK");
+    	writer.println("BLOCK");
     	this.visit(ctx.block());
     	System.out.println("BLOCK_END");
+    	writer.println("BLOCK_END");
     	return null; 
     }
 	
