@@ -5,7 +5,12 @@ import org.antlr.v4.runtime.misc.NotNull;
 
 import mu.MuBaseVisitor;
 import mu.MuParser;
+import mu.MuParser.AdditiveExprContext;
+import mu.MuParser.AtomExprContext;
 
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,13 +18,61 @@ import java.util.Scanner;
 
 
 public class EvalVisitor extends MuBaseVisitor<Value> {
-
-    // used to compare floating point numbers
+	public PrintWriter writer;
+    
+	public EvalVisitor(PrintWriter writer) throws FileNotFoundException {
+		this.writer = writer;
+	}
+	// used to compare floating point numbers
 	public int LabelCount = 0;
     public static final double SMALL_VALUE = 0.00000000001;
+    public List<String> booleanVars = new ArrayList<String>();
+    
+    
 
     // store variables (there's only one global scope!)
     private Map<String, Value> memory = new HashMap<String, Value>();
+    @Override 
+    public Value visitGlobal_scope(MuParser.Global_scopeContext ctx) {
+    	System.out.println("GLOBAL_START");
+    	writer.println("GLOBAL_START");
+    	this.visit(ctx.block());
+    	System.out.println("GLOBAL_END");
+    	writer.println("GLOBAL_END");
+    	return null;
+    }
+    
+    @Override 
+    public Value visitBlock_scope(MuParser.Block_scopeContext ctx) { 
+    	System.out.println("BLOCK");
+    	writer.println("BLOCK");
+    	this.visit(ctx.block());
+    	System.out.println("BLOCK_END");
+    	writer.println("BLOCK_END");
+    	return null; 
+    }
+	
+	
+    @Override 
+    public Value visitBlock(MuParser.BlockContext ctx) { 
+    	if(ctx.getChild(0).getText().equals("[")) {
+    		System.out.println("BLOCK");
+    	}
+    	else if(ctx.getChild(0).getText().equals("<")) {
+    		System.out.println("GLOBAL_START");
+    	}
+    	for(int i=0; i< ctx.stat().size();i++){
+    		this.visit(ctx.stat(i));
+    	}
+    	if(ctx.getChild(0).getText().equals("[")) {
+    		System.out.println("BLOCK_END");
+    	}
+    	else if(ctx.getChild(0).getText().equals("<")) {
+    		System.out.println("GLOBAL_END");
+    	}
+    	return null;
+    	
+    }
 
     // assignment/id overrides
     @Override
@@ -29,20 +82,44 @@ public class EvalVisitor extends MuBaseVisitor<Value> {
         if(ctx.stack_top() != null){
         	System.out.println("TOPS VAR_"+ctx.stack_top().ID());
         	System.out.println("MOV VAR_"+ctx.getChild(0).toString()+" EAX");
+        	writer.println("TOPS VAR_"+ctx.stack_top().ID());
+        	writer.println("MOV VAR_"+ctx.getChild(0).toString()+" EAX");
         }
         else if(ctx.functionCall() != null){ 
-        	value = this.visit(ctx.functionCall()); 
-        	System.out.println("MOV VAR_"+ctx.getChild(0).toString()+" "+value);
-            
+        	value = this.visit(ctx.functionCall());
+        	if(booleanVars.contains(ctx.getChild(0).toString())){
+        		System.out.println("MOV VARB_"+ctx.getChild(0).toString()+" "+value);
+        		writer.println("MOV VARB_"+ctx.getChild(0).toString()+" "+value);
+        	
+        	} else{
+        		System.out.println("MOV VAR_"+ctx.getChild(0).toString()+" "+value);
+        		writer.println("MOV VAR_"+ctx.getChild(0).toString()+" "+value);
+        	}
         }
-        
+        else if((ctx.expr().getText()).equals("true"))  {
+        	System.out.println("VARB_"+ctx.getChild(0).toString() + " 1");
+        	writer.println("VARB_"+ctx.getChild(0).toString() + " 1");
+        	booleanVars.add(ctx.getChild(0).toString());
+        }
+        else if((ctx.expr().getText()).equals("false")){
+        	System.out.println("VARB_"+ctx.getChild(0).toString() + " 0");
+        	writer.print("VARB_"+ctx.getChild(0).toString() + " 0");
+        	booleanVars.add(ctx.getChild(0).toString());
+        }
         else if (isInteger(ctx.expr().getText())) {
         	System.out.println("VAR_" + ctx.getChild(0).toString() + " " + ctx.expr().getText());
+        	writer.println("VAR_" + ctx.getChild(0).toString() + " " + ctx.expr().getText());
     	}
         else{
         	value = visit(ctx.expr());
-        	System.out.println("MOV VAR_"+ctx.getChild(0).toString()+" "+value);
-            
+        	if(booleanVars.contains(ctx.getChild(0).toString())){
+        		System.out.println("MOV VARB_"+ctx.getChild(0).toString()+" "+value);
+        		writer.println("MOV VARB_"+ctx.getChild(0).toString()+" "+value);
+        	
+        	} else{
+        		System.out.println("MOV VAR_"+ctx.getChild(0).toString()+" "+value);
+        		writer.println("MOV VAR_"+ctx.getChild(0).toString()+" "+value);
+        	}
         }
         return memory.put(id, value);
     }
@@ -62,19 +139,23 @@ public class EvalVisitor extends MuBaseVisitor<Value> {
 	    }
 	    return true;
     }
-
-    
+   
     @Override 
     public Value visitFunctionDefinition(MuParser.FunctionDefinitionContext ctx) { 
     	//System.out.println(ctx.ID(0).toString().toUpperCase()+"_START");
     	String s = ctx.ID(0).toString().toUpperCase()+"_START";
     	for(int i=1; i < ctx.ID().size();i++){
-    		s = s+ " VAR_"+ctx.ID(i).getText();
+    		if(booleanVars.contains(ctx.ID(i).getText())){ 
+    			s = s + " VARB_"+ctx.ID(i).getText();
+    		} else {
+    			s = s+ " VAR_"+ctx.ID(i).getText();
+    		}
     	}
     	System.out.println(s);
-    	
+    	writer.println(s);
     	visitChildren(ctx); 
     	System.out.println(ctx.ID(0).toString().toUpperCase()+"_END");
+    	writer.println(ctx.ID(0).toString().toUpperCase()+"_END");
     	return null;
     }
     
@@ -84,6 +165,7 @@ public class EvalVisitor extends MuBaseVisitor<Value> {
     	for(int i=0;i<ctx.paramDefs().getChildCount();i++){
     		if(!(ctx.paramDefs().getChild(i).toString().equals(","))){
     			System.out.println("PUSH VAR_"+ctx.paramDefs().getChild(i));
+    			writer.println("PUSH VAR_"+ctx.paramDefs().getChild(i));
     		}
 //    		if(!(ctx.paramDefs().getChild(i).toString().equals(","))){
 //    			this.visit(ctx.paramDefs().getChild(i));
@@ -91,7 +173,8 @@ public class EvalVisitor extends MuBaseVisitor<Value> {
 //    		}
     	}
     	System.out.println("CALL "+ctx.ID().toString().toUpperCase()+"_START");
-    	//return visitChildren(ctx); 
+    	writer.println("CALL "+ctx.ID().toString().toUpperCase()+"_START");
+    	//return visitChildren(ctx);
     	return new Value("EAX");
     }
 	
@@ -137,6 +220,7 @@ public class EvalVisitor extends MuBaseVisitor<Value> {
     @Override 
     public Value visitStack_init(MuParser.Stack_initContext ctx) { 
     	System.out.println("STACK VAR_"+ctx.ID().getText());
+    	writer.println("STACK VAR_"+ctx.ID().getText());
     	return visitChildren(ctx); 
     }
 	
@@ -144,12 +228,15 @@ public class EvalVisitor extends MuBaseVisitor<Value> {
     public Value visitStack_operations(MuParser.Stack_operationsContext ctx) { 
     	if(ctx.getChild(0).getText().equals("spush")) {
     		System.out.println("STACK_PSHS VAR_"+ctx.ID().getText() +" "+ ctx.INT().getText());
+    		writer.println("STACK_PSHS VAR_"+ctx.ID().getText() +" "+ ctx.INT().getText());
     	}
     	else if(ctx.getChild(0).getText().equals("spop")) {
     		System.out.println("STACK_POP VAR_"+ctx.ID().getText());
+    		writer.println("STACK_POP VAR_"+ctx.ID().getText());
     	}
     	else if(ctx.getChild(0).getText().equals("empty")) {
     		System.out.println("EMPTY VAR_"+ctx.ID().getText());
+    		writer.println("EMPTY VAR_"+ctx.ID().getText());
     	}
     	
     	return visitChildren(ctx); 
@@ -179,6 +266,8 @@ public class EvalVisitor extends MuBaseVisitor<Value> {
     @Override
     public Value visitNotExpr(MuParser.NotExprContext ctx) {
         Value value = this.visit(ctx.expr());
+        System.out.println("NOT VAR_"+ctx.expr().getText());
+        writer.println("NOT VAR_"+ctx.expr().getText());
         return new Value(!value.asBoolean());
     }
 
@@ -193,18 +282,29 @@ public class EvalVisitor extends MuBaseVisitor<Value> {
         int flagl = 0, flagr = 0;
         
         try{
-        	op1 = ""+Double.parseDouble(left.toString());
+        	op1 = ""+Integer.parseInt(left.toString());
         	
         }
         catch(Exception e){
-        	op1 = "VAR_"+left.toString();
+        	if(left.toString().equals("EAX")){
+        		op1 = "EAX";
+        	}
+        	else{
+        		op1 = "VAR_"+left.toString();
+        	}
         }
         try{
-        	op2 = ""+Double.parseDouble(right.toString());
+        	op2 = ""+Integer.parseInt(right.toString());
         	
         }
         catch(Exception e){
-        	op2 = "VAR_"+right.toString();
+        	if(right.toString().equals("EAX")){
+        		op2 = "EAX";
+        	}
+        	else{
+        		op2 = "VAR_"+right.toString();
+        	}
+//        	op2 = "VAR_"+right.toString();
         }
 
         switch (ctx.op.getType()) {
@@ -220,6 +320,7 @@ public class EvalVisitor extends MuBaseVisitor<Value> {
                 
         }
         System.out.println(operator + " " + op1+ " " + op2);
+        writer.println(operator + " " + op1+ " " + op2);
         return new Value("EAX");
     }
 
@@ -229,25 +330,37 @@ public class EvalVisitor extends MuBaseVisitor<Value> {
     	Value left = new Value(ctx.expr(0).getText());
         Value right = new Value(ctx.expr(1).getText());
 
+        left = this.visit(ctx.expr(0));
+        right = this.visit(ctx.expr(1));
         String op1 = left.asString(), op2 = right.asString();
         String operator = "ADD";
-        Value returnValue = null;
-        int flagl = 0, flagr = 0;
         
         try{
         	op1 = ""+Integer.parseInt(left.toString());
         	
         }
         catch(Exception e){
-        	op1 = "VAR_"+left.toString();
+        	if(left.toString().equals("EAX")){
+        		op1 = "EAX";
+        	}
+        	else{
+        		op1 = "VAR_"+left.toString();
+        	}
         }
         try{
         	op2 = ""+Integer.parseInt(right.toString());
         	
         }
         catch(Exception e){
-        	op2 = "VAR_"+right.toString();
+        	if(right.toString().equals("EAX")){
+        		op2 = "EAX";
+        	}
+        	else{
+        		op2 = "VAR_"+right.toString();
+        	}
         }
+        
+        
         switch (ctx.op.getType()) {
         	case MuParser.PLUS:
         		operator = "ADD";
@@ -258,28 +371,35 @@ public class EvalVisitor extends MuBaseVisitor<Value> {
             
         }
         System.out.println(operator+ " " + op1 + " " + op2);
+        writer.println(operator+ " " + op1 + " " + op2);
         return new Value("EAX");
     }
 
     @Override
     public Value visitRelationalExpr(@NotNull MuParser.RelationalExprContext ctx) {
-
         Value left = this.visit(ctx.expr(0));
         Value right = this.visit(ctx.expr(1));
+        
         System.out.println("CMP "+left+ " " +right);
+        writer.println("CMP "+left+ " " +right);
+        
         switch (ctx.op.getType()) {
             case MuParser.LT:
             	System.out.println("JGE LABEL_"+LabelCount);
+            	writer.println("JGE LABEL_"+LabelCount);
             	break;
                 
             case MuParser.LTEQ:
             	System.out.println("JGT LABEL_"+LabelCount);
+            	writer.println("JGT LABEL_"+LabelCount);
             	break;
             case MuParser.GT:
             	System.out.println("JLE LABEL_"+LabelCount);
+            	writer.println("JLE LABEL_"+LabelCount);
             	break;
             case MuParser.GTEQ:
             	System.out.println("JLT LABEL_"+LabelCount);
+            	writer.println("JLT LABEL_"+LabelCount);
             	break;
             default:
                 throw new RuntimeException("unknown operator: " + MuParser.tokenNames[ctx.op.getType()]);
@@ -292,10 +412,14 @@ public class EvalVisitor extends MuBaseVisitor<Value> {
 
         Value left = this.visit(ctx.expr(0));
         Value right = this.visit(ctx.expr(1));
-        if(!isInteger(left.toString())){
+		if(booleanVars.contains(left.toString()) && booleanVars.contains(right.toString())){
+			left = new Value("VARB_"+left.asString());
+			right = new Value("VARB_"+right.asString());
+		}
+		else if(!isInteger(left.toString())){
         	left = new Value("VAR_"+left.asString());
         }
-        if(!isInteger(right.toString())){
+		else if(!isInteger(right.toString())){
         	right = new Value("VAR_"+right.asString());
         }
 
@@ -303,11 +427,15 @@ public class EvalVisitor extends MuBaseVisitor<Value> {
             case MuParser.EQ:
             	System.out.println("CMP "+left+ " "+ right);
             	System.out.println("JNE LABEL_"+LabelCount);
+            	writer.println("CMP "+left+ " "+ right);
+            	writer.println("JNE LABEL_"+LabelCount);
                 return new Value("LABEL_"+LabelCount++);
                         
             case MuParser.NEQ:
             	System.out.println("CMP "+left+ " "+ right);
             	System.out.println("JE LABEL_"+LabelCount);
+            	writer.println("CMP "+left+ " "+ right);
+            	writer.println("JE LABEL_"+LabelCount);
                 return new Value("LABEL_"+LabelCount++);
             default:
                 throw new RuntimeException("unknown operator: " + MuParser.tokenNames[ctx.op.getType()]);
@@ -318,6 +446,8 @@ public class EvalVisitor extends MuBaseVisitor<Value> {
     public Value visitAndExpr(MuParser.AndExprContext ctx) {
         Value left = this.visit(ctx.expr(0));
         Value right = this.visit(ctx.expr(1));
+        System.out.println("AND VARB_"+ctx.expr(0).getText()+" VARB_"+ctx.expr(1).getText());
+        writer.println("AND VARB_"+ctx.expr(0).getText()+" VARB_"+ctx.expr(1).getText());
         return new Value(left.asBoolean() && right.asBoolean());
     }
 
@@ -325,6 +455,8 @@ public class EvalVisitor extends MuBaseVisitor<Value> {
     public Value visitOrExpr(MuParser.OrExprContext ctx) {
         Value left = this.visit(ctx.expr(0));
         Value right = this.visit(ctx.expr(1));
+        System.out.println("OR VARB_"+ctx.expr(0).getText()+" VARB_"+ctx.expr(1).getText());
+        writer.println("OR VARB_"+ctx.expr(0).getText()+" VARB_"+ctx.expr(1).getText());
         return new Value(left.asBoolean() || right.asBoolean());
     }
     
@@ -332,17 +464,29 @@ public class EvalVisitor extends MuBaseVisitor<Value> {
     public Value visitReturn_stat(MuParser.Return_statContext ctx) {
     	if(isInteger(ctx.getChild(1).getText())){
     		System.out.println("RET " + ctx.getChild(1).getText());
+    		writer.println("RET " + ctx.getChild(1).getText());
     	}
     	else{
-    		System.out.println("RET VAR_" + ctx.getChild(1).getText());
+    		writer.println("RET VAR_" + ctx.getChild(1).getText());
     	}
     	return visitChildren(ctx);
     }
     
     @Override 
     public Value visitPrint(MuParser.PrintContext ctx) {
-		System.out.println("PRINT VAR_" + ctx.ID().getText());
-    	return visitChildren(ctx);
+    	if(ctx.STRING() != null){
+    		System.out.println("PRINT " + ctx.STRING().getText());
+    		writer.println("PRINT " + ctx.STRING().getText());
+    	} else {
+    		if(booleanVars.contains(ctx.ID().getText())){
+    			System.out.println("PRINT VARB_" + ctx.ID().getText());
+	    		writer.println("PRINT VARB_" + ctx.ID().getText());
+    		}else{
+	    		System.out.println("PRINT VAR_" + ctx.ID().getText());
+	    		writer.println("PRINT VAR_" + ctx.ID().getText());
+    		}
+    	}
+    	return null;
     }
     
     // log override
@@ -350,6 +494,7 @@ public class EvalVisitor extends MuBaseVisitor<Value> {
     public Value visitLog(MuParser.LogContext ctx) {
         Value value = this.visit(ctx.expr());
         System.out.println(value);
+        writer.println(value);
         return value;
     }
 
@@ -360,32 +505,42 @@ public class EvalVisitor extends MuBaseVisitor<Value> {
         List<MuParser.Condition_blockContext> conditions =  ctx.condition_block();
 
         boolean evaluatedBlock = false;
-        //ctx.getChiled(0)
         Value label = null;
         for(MuParser.Condition_blockContext condition : conditions) {
         	if(label != null){
         		System.out.println(label);
+        		writer.println(label);
         	}
-
+        	
             label = this.visit(condition.expr());
-
             this.visit(condition.stat_block());
             
         }
-
+        System.out.println("JMP LABEL_"+LabelCount);
+        writer.println("JMP LABEL_"+LabelCount);
         System.out.println(label);
+        writer.println(label);
+        if(ctx.getText().contains("else{")){
+        	this.visit(ctx.stat_block());	
+        }
+        System.out.println("LABEL_"+LabelCount++);
+        writer.println("LABEL_"+LabelCount++);
         return Value.VOID;
     }
 
     // while override
     @Override
     public Value visitWhile_stat(MuParser.While_statContext ctx) {
-    	String while_label = "LABEL_"+LabelCount++;
-        System.out.println(while_label);
+    	String while_label = "LABEL_"+LabelCount++;  
+    	System.out.println(while_label);
+        writer.println(while_label);
         Value value = this.visit(ctx.expr());
+        
         this.visit(ctx.stat_block());
         System.out.println("JMP "+while_label);
         System.out.println(value);
+        writer.println("JMP "+while_label);
+        writer.println(value);
         return Value.VOID;
     }
 }

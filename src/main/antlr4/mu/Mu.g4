@@ -20,8 +20,17 @@ stat
  | print
  | stack_init
  | stack_operations
+ | global_scope
+ | block_scope
  ;
  
+global_scope
+ : '<' block '>'
+ ;
+ 
+block_scope
+ : '[' block ']'
+ ; 
 return_stat
  : 'return' expr SCOL
  ;
@@ -37,7 +46,8 @@ stack_operations
  ;
 
 print
-	:	'print' ID ';'
+	:	'print' ID SCOL
+	|   'print' STRING SCOL
 	;	
 
 functionDefinition
