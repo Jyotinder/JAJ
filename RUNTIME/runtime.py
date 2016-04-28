@@ -337,11 +337,17 @@ def main():
     parser.add_argument('-f', "--folderpath", help="ASSM file required", required=True)
     args = vars(parser.parse_args())
     file=args['folderpath']
-    fin= open(file,"r")
-    code = fin.read().splitlines()
+    if "jaji" in file:
+        fin= open(file,"r")
+        code = fin.read().splitlines()
+        try:
+            In=interp(code)
+            In.execute()
+        except:
+            print "Variable is not initialized"
 
-    In=interp(code)
-    In.execute()
+    else:
+        print "Enter a valid jaji file"
 
 
 
