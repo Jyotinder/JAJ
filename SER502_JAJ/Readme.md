@@ -4,6 +4,9 @@ JAJ is a procedural programming language which is similar to C.
 The Lexing and Parsing phases were implemented using ANTLR4 tool and JAVA
 The runtime environment is in python.
 
+Youtube Link :- https://www.youtube.com/watch?v=2nJaYDFsSGo
+Github Repo :- https://github.com/Jyotinder/JAJ
+
 ## Sample Programs
 
 Code examples are enclosed in the 'src/main/jaj' folder with .jaj extensions
@@ -44,10 +47,6 @@ Github Repo :- https://github.com/Jyotinder/JAJ
 
 ## Contributors
 
-Jyotinder Pal Singh
-Ayush Gupta
-Jeme John
-
-## License
-
-A short snippet describing the license (MIT, Apache, etc.)
+Jyotinder Pal Singh,
+Ayush Gupta,
+Jeme John.
