@@ -1,4 +1,4 @@
-# ***** Program to find the sum of first 10 natural numbers *****
+#Program to find the sum of first 10 natural numbers *****
 main(){
   x=10;
   b = 100;

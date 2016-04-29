@@ -20,10 +20,11 @@ public class Main {
 
 		System.out.println("parsing: " + args[0]);
 
-		JAJLexer lexer = new JAJLexer(new ANTLRFileStream("src/main/mu/"+args[0]));
+		JAJLexer lexer = new JAJLexer(new ANTLRFileStream("src/main/jaj/"+args[0]));
 		JAJParser parser = new JAJParser(new CommonTokenStream(lexer));
 		ParseTree tree = parser.parse();
-		PrintWriter writer = new PrintWriter("src/main/mu/"+args[0]+"i");
+		PrintWriter writer = new PrintWriter("src/main/jaj/"+args[0]+"i");
+		System.out.println("\n");
 		EvalVisitor visitor = new EvalVisitor(writer);
 		visitor.visit(tree);
 		writer.close();

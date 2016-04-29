@@ -104,7 +104,7 @@ public class EvalVisitor extends JAJBaseVisitor<Value> {
         }
         else if((ctx.expr().getText()).equals("false")){
         	System.out.println("VARB_"+ctx.getChild(0).toString() + " 0");
-        	writer.print("VARB_"+ctx.getChild(0).toString() + " 0");
+        	writer.println("VARB_"+ctx.getChild(0).toString() + " 0");
         	booleanVars.add(ctx.getChild(0).toString());
         }
         else if (isInteger(ctx.expr().getText())) {

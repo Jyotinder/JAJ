@@ -1,11 +1,9 @@
 main(){
 x = true;
 y = false;
-{
-z=0;
-m=2;
-}
 
+num = 2;
+num = num+1;
 
 if(x == y) {
 	print "x = y";
@@ -13,5 +11,6 @@ if(x == y) {
 else {
 	print "x != y";
 }
-print "exited if-else-block";
+print "num+1 is :";
+print num;
 }

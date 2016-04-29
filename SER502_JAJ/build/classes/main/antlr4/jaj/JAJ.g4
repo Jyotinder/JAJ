@@ -1,7 +1,7 @@
 grammar JAJ;
 
 parse
- : block EOF
+ : block
  ;
 
 block
